@@ -1,0 +1,16 @@
+[Unit]
+Description=Morse server
+After=network.target
+
+[Service]
+WorkingDirectory=/home/MYHOMEDIR/morse
+ExecStart=/usr/local/bin/erl -noshell -config morse.config -pa ebin deps/cowboy/ebin deps/cowlib/ebin deps/ranch/ebin -run morse
+ExecStop=-/usr/bin/curl -ks https://127.0.0.1:12345/halt
+User=daemon
+Group=ssl-cert
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=morse
+
+[Install]
+WantedBy=multi-user.target

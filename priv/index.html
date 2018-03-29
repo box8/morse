@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<title>morse</title>
+<style>
+html, body { height: 100%; }
+body { font-size: xx-large; margin: 0; user-select: none; }
+audio { display: none; }
+button, div { display: block; margin: 0 auto 0 auto; width: 90%; }
+#bPlay { height: 50%; }
+#bReplay { height: 30%; margin-top: 5%; }
+#count { font-weight: bold; }
+.off { background-color: #bb6666; }
+.on { background-color: #66bb66; }
+</style>
+<script>
+var audio, button, count, last, mediaRecorder, queue = [], ws;
+
+var play = function() {
+	if ((!audio.src || audio.ended) && queue.length) {
+		if (audio.src) window.URL.revokeObjectURL(audio.src);
+		last = queue.shift();
+		audio.src = window.URL.createObjectURL(last);
+		audio.play();
+	}
+};
+
+var replay = function() {
+	if (last) {
+		queue.unshift(last);
+		play();
+	}
+};
+
+var connect = function() {
+	ws = new WebSocket((window.location.protocol == 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host + window.location.pathname + '/ws');
+	var reconnect = function() {
+		if (ws) {
+			ws.close();
+			button.className = 'off';
+		}
+		window.setTimeout(connect, 3000);
+	};
+	ws.onclose = reconnect;
+	ws.onerror = function(e) { if (e.readyState == WebSocket.CONNECTING) reconnect(); };
+	ws.onmessage = function(e) {
+		switch (typeof e.data) {
+			case 'string':
+				var j = JSON.parse(e.data);
+				if ('count' in j) count.innerText = j['count'];
+				break;
+			default:
+				if (e.data.size) {
+					queue.push(e.data);
+					play();
+				}
+				break;
+		}
+	};
+	ws.onopen = function() { button.className = 'on'; };
+};
+
+var start = function() {
+	navigator.mediaDevices.getUserMedia({audio: true, video: false}).then(function(stream) {
+		mediaRecorder = new MediaRecorder(stream, {bitsPerSecond: 12000});
+		mediaRecorder.ondataavailable = function(e) { if (ws) ws.send(e.data); };
+		mediaRecorder.start();
+	});
+};
+
+var stop = function() {
+	if (mediaRecorder) {
+		mediaRecorder.stream.getAudioTracks()[0].stop();
+		mediaRecorder.stop();
+		mediaRecorder = null;
+	}
+};
+
+function init2() {
+	audio.play();
+	button.removeEventListener('click', init2);
+	button.innerHTML = 'Push to talk';
+	button.className = 'off';
+	connect();
+	audio.addEventListener('ended', play);
+	button.addEventListener('mousedown', start);
+	button.addEventListener('mouseup', stop);
+	button.addEventListener('touchstart', start);
+	button.addEventListener('touchend', stop);
+}
+
+function init() {
+	audio = document.querySelector('audio');
+	count = document.querySelector('#count');
+	button = document.querySelector('#bPlay');
+	button.addEventListener('click', init2);
+	document.querySelector('#bReplay').addEventListener('click', replay);
+}
+
+</script>
+</head><body onload="init()">
+<div>Online: <span id="count">0</span></div>
+<button id="bPlay">Press to connect</button>
+<button id="bReplay">Replay</button>
+<audio></audio>
+</body></html>
