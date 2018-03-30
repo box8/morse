@@ -93,10 +93,14 @@ function init2() {
 	button.className = 'off';
 	connect();
 	audio.addEventListener('ended', play);
-	button.addEventListener('mousedown', start);
-	button.addEventListener('mouseup', stop);
-	button.addEventListener('touchstart', start);
-	button.addEventListener('touchend', stop);
+	if ('ontouchstart' in window) {
+		button.addEventListener('touchstart', start);
+		button.addEventListener('touchend', stop);
+	} else {
+		button.addEventListener('mousedown', start);
+		button.addEventListener('mouseleave', stop);
+		button.addEventListener('mouseup', stop);
+	}
 }
 
 function init() {
