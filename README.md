@@ -1,7 +1,10 @@
 morse
 =====
 
-**M**y **O**wn **R**adio **Se**rver is push-to-talk service for small groups. It runs on your own dedicated server. It's intended for Android devices, but works with any modern browser.
+**M**y **O**wn **R**adio **Se**rver is push-to-talk service for small groups.
+* Runs on your own dedicated server.
+* Intended for Android devices, but works with any modern browser.
+* Supports multiple isolated channels.
 
 Installation
 ------------
@@ -50,7 +53,7 @@ $ sudo systemctl start morse
 Using morse
 -----------
 
-* In browser navigate to https://YOURSERVER:12345/q/w/e/r/t/y (or what your port and secret_prefix is).
+* In browser navigate to https://YOURSERVER:12345/q/w/e/r/t/y?MYCHANNELNAME (or what your port, secret_prefix and desired channel is).
 * Press top button to connect (user action required to unlock \<audio\> element on Android).
 * Press top button, allow using microphone for site.
 * Push top button to talk, press bottom button to replay last incoming message.

@@ -5,9 +5,10 @@
 <title>morse</title>
 <style>
 html, body { height: 100%; }
-body { font-size: xx-large; margin: 0; user-select: none; }
+body { margin: 0; user-select: none; }
+button, div { display: block; font-size: xx-large; margin: 0 auto 0 auto; width: 90%; }
+div { padding: 1%; }
 audio { display: none; }
-button, div { display: block; margin: 0 auto 0 auto; width: 90%; }
 #bPlay { height: 50%; }
 #bReplay { height: 30%; margin-top: 5%; }
 #count { font-weight: bold; }
@@ -34,7 +35,14 @@ var replay = function() {
 };
 
 var connect = function() {
-	ws = new WebSocket((window.location.protocol == 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host + window.location.pathname + '/ws');
+	ws = new WebSocket(
+		(window.location.protocol == 'https:' ? 'wss:' : 'ws:') +
+		'//' +
+		window.location.host +
+		window.location.pathname +
+		'/ws' +
+		window.location.search
+	);
 	var reconnect = function() {
 		if (ws) {
 			ws.close();
@@ -48,7 +56,8 @@ var connect = function() {
 		switch (typeof e.data) {
 			case 'string':
 				var j = JSON.parse(e.data);
-				if ('count' in j) count.innerText = j['count'];
+				if ('channel' in j) channel.innerText = decodeURIComponent(j.channel);
+				if ('count' in j) count.innerText = j.count;
 				break;
 			default:
 				if (e.data.size) {
@@ -92,6 +101,8 @@ function init2() {
 
 function init() {
 	audio = document.querySelector('audio');
+	channel = document.querySelector('#channel');
+	channel.innerText = decodeURIComponent(window.location.search.slice(1));
 	count = document.querySelector('#count');
 	button = document.querySelector('#bPlay');
 	button.addEventListener('click', init2);
@@ -100,7 +111,7 @@ function init() {
 
 </script>
 </head><body onload="init()">
-<div>Online: <span id="count">0</span></div>
+<div>Channel: "<span id="channel"></span>"<br>Online: <span id="count">0</span></div>
 <button id="bPlay">Press to connect</button>
 <button id="bReplay">Replay</button>
 <audio></audio>

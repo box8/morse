@@ -17,41 +17,41 @@
 
 %% exports
 
-init(Req, State) -> {cowboy_websocket, Req, State, #{idle_timeout => infinity}}.
+init(Req, _State) ->
+	Channel = cowboy_req:qs(Req),
+	{cowboy_websocket, Req, Channel, #{idle_timeout => infinity}}.
 
-websocket_init(State) ->
-	pg2:join(?MODULE, self()),
-	notify_count(),
-	{ok, State}.
+websocket_init(Channel) ->
+	Pg = {?MODULE, Channel},
+	pg2:create(Pg),
+	pg2:join(Pg, self()),
+	notify(Pg),
+	Data = iolist_to_binary([<<"{\"channel\":\"">>, Channel, <<"\"}">>]),
+	{reply, {text, Data}, Pg}.
 
-websocket_handle({binary, Data}, State) ->
+websocket_handle({binary, Data}, Pg) ->
 	lists:foreach(fun
 		(Pid) when Pid =:= self() -> ok;
 		(Pid) -> Pid ! {binary, Data}
-	end, pg2:get_local_members(?MODULE)),
-	{ok, State};
-websocket_handle(_Data, State) -> {ok, State}.
+	end, pg2:get_local_members(Pg)),
+	{ok, Pg};
+websocket_handle(_Data, Pg) -> {ok, Pg}.
 
-websocket_info({binary, Data}, State) -> {reply, {binary, Data}, State};
-websocket_info({text, Data}, State) -> {reply, {text, Data}, State};
-websocket_info(_Info, State) -> {ok, State}.
+websocket_info({binary, Data}, Pg) -> {reply, {binary, Data}, Pg};
+websocket_info({text, Data}, Pg) -> {reply, {text, Data}, Pg};
+websocket_info(_Info, Pg) -> {ok, Pg}.
 
-terminate(_Reason, _PartialReq, _State) ->
-	pg2:leave(?MODULE, self()),
-	notify_count(),
+terminate(_Reason, _PartialReq, Pg) ->
+	pg2:leave(Pg, self()),
+	case pg2:get_local_members(Pg) of
+		[] -> pg2:delete(Pg);
+		_ -> notify(Pg)
+	end,
 	ok.
 
 %% internal
 
-notify(Data) ->
-	lists:foreach(fun(Pid) ->
-		Pid ! {text, Data}
-	end, pg2:get_local_members(?MODULE)).
-
-notify_count() ->
-	Data = iolist_to_binary([
-		<<"{\"count\":">>,
-		integer_to_binary(length(pg2:get_local_members(?MODULE))),
-		$}
-	]),
-	notify(Data).
+notify(Pg) ->
+	Pids = pg2:get_local_members(Pg),
+	Data = iolist_to_binary([<<"{\"count\":">>, integer_to_binary(length(Pids)), $}]),
+	lists:foreach(fun(Pid) -> Pid ! {text, Data} end, Pids).

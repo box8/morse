@@ -31,9 +31,6 @@ start() ->
 %% application
 
 start(_Type, _Args) ->
-	ok = pg2:create(morse_handler_ws),
-	AppPath = filename:dirname(filename:dirname(code:which(?MODULE))),
-	PrivDir = filename:join(AppPath, "priv"),
 	{ok, Config} = application:get_env(?MODULE, config),
 	{_, Addr} = proplists:lookup(addr, Config),
 	{_, Port} = proplists:lookup(port, Config),
@@ -41,6 +38,8 @@ start(_Type, _Args) ->
 	{_, CertFile} = proplists:lookup(certfile, Config),
 	{_, KeyFile} = proplists:lookup(keyfile, Config),
 	{_, Secret} = proplists:lookup(secret_prefix, Config),
+	AppPath = filename:dirname(filename:dirname(code:which(?MODULE))),
+	PrivDir = filename:join(AppPath, "priv"),
 	Dispatch = cowboy_router:compile([
 		{"127.0.0.1", [{"/halt", ?MODULE, []}]},
 		{'_', [
