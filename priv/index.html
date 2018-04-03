@@ -8,9 +8,10 @@ html, body { height: 100%; }
 body { margin: 0; user-select: none; }
 button, div { display: block; font-size: xx-large; margin: 0 auto 0 auto; width: 90%; }
 div { padding: 1%; }
+input { margin-left: 2%; }
 audio { display: none; }
 #bPlay { height: 50%; }
-#bReplay { height: 30%; margin-top: 5%; }
+#bReplay { height: 30%; margin-top: 3%; }
 #count { font-weight: bold; }
 .off { background-color: #bb6666; }
 .on { background-color: #66bb66; }
@@ -105,6 +106,18 @@ function init2() {
 
 function init() {
 	audio = document.querySelector('audio');
+	var ac = new AudioContext();
+	var src = ac.createMediaElementSource(audio);
+	var sp = ac.createStereoPanner();
+	var g = ac.createGain();
+	src.connect(sp);
+	sp.connect(g);
+	g.connect(ac.destination);
+	var setGain = function(e) { g.gain.value = e.target.value; };
+	document.querySelectorAll('[name=gain]').forEach(function(e) {
+		e.addEventListener('click', setGain);
+		if (e.checked) setGain({target: e});
+	});
 	channel = document.querySelector('#channel');
 	channel.innerText = decodeURIComponent(window.location.search.slice(1));
 	count = document.querySelector('#count');
@@ -115,7 +128,16 @@ function init() {
 
 </script>
 </head><body onload="init()">
-<div>Channel: "<span id="channel"></span>"<br>Online: <span id="count">0</span></div>
+<div>
+	Channel: "<span id="channel"></span>"<br>
+	Online: <span id="count">0</span><br>
+	Gain:
+	<input type="radio" id="gain1" name="gain" value="1.0"><label for="gain1">1</label>
+	<input type="radio" id="gain3" name="gain" value="3.0" checked="checked"><label for="gain3">3</label>
+	<input type="radio" id="gain9" name="gain" value="9.0"><label for="gain9">9</label>
+	<input type="radio" id="gain27" name="gain" value="27.0"><label for="gain27">27</label>
+	<input type="radio" id="gain81" name="gain" value="81.0"><label for="gain81">81</label>
+</div>
 <button id="bPlay">Press to connect</button>
 <button id="bReplay">Replay</button>
 <audio></audio>
