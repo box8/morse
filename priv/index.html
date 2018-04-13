@@ -73,6 +73,7 @@ var connect = function() {
 
 var start = function() {
 	navigator.mediaDevices.getUserMedia({audio: true, video: false}).then(function(stream) {
+		if (audio.src && !audio.ended) audio.pause();
 		mediaRecorder = new MediaRecorder(stream, {bitsPerSecond: 12000});
 		mediaRecorder.ondataavailable = function(e) { if (ws) ws.send(e.data); };
 		mediaRecorder.start();
@@ -84,6 +85,7 @@ var stop = function() {
 		mediaRecorder.stream.getAudioTracks()[0].stop();
 		mediaRecorder.stop();
 		mediaRecorder = null;
+		if (!audio.ended && audio.paused) audio.play();
 	}
 };
 
@@ -113,7 +115,7 @@ function init() {
 	src.connect(sp);
 	sp.connect(g);
 	g.connect(ac.destination);
-	var setGain = function(e) { g.gain.value = e.target.value; };
+	var setGain = function(e) { g.gain.setTargetAtTime(e.target.value, ac.currentTime, 0); };
 	document.querySelectorAll('[name=gain]').forEach(function(e) {
 		e.addEventListener('click', setGain);
 		if (e.checked) setGain({target: e});
