@@ -55,5 +55,4 @@ Using morse
 
 * In browser navigate to https://YOURSERVER:12345/q/w/e/r/t/y?MYCHANNELNAME (or what your port, secret_prefix and desired channel is).
 * Press top button to connect (user action required to unlock \<audio\> element on Android).
-* Press top button, allow using microphone for site.
-* Push top button to talk, press bottom button to replay last incoming message.
+* Push top button to talk (allow using microphone for site), press bottom button to replay last incoming message.
